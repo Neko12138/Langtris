@@ -10,10 +10,38 @@
 <body>
     <div id="game-wrapper">
         <div id="game"></div>
-        <div id="aux"></div>
+        <div id="aux-panel">
+            <button id="export-text-button" type="button" disabled>
+                Export Text
+            </button>
+            <div id="aux"></div>
+        </div>
     </div>
 
     <script src="./phaser/engine/phaser.min.js"></script>
     <script src="./src/main.js"></script>
+    <script>
+      const baseWidth = 400 + 16 + 220;
+      const baseHeight = 900;
+
+      function fitGameToViewport() {
+        const margin = 24;
+        const availableWidth = Math.max(window.innerWidth - margin, 1);
+        const availableHeight = Math.max(window.innerHeight - margin, 1);
+        const scale = Math.min(
+          availableWidth / baseWidth,
+          availableHeight / baseHeight
+        );
+
+        document.documentElement.style.setProperty(
+          "--game-scale",
+          scale.toString()
+        );
+      }
+
+      window.addEventListener("resize", fitGameToViewport);
+      window.addEventListener("orientationchange", fitGameToViewport);
+      fitGameToViewport();
+    </script>
 </body>
 </html>

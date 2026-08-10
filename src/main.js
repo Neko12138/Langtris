@@ -95,6 +95,8 @@ let auxSceneRef = null;
 
 let clearedPhrases = [];
 
+let exportTextButton = null;
+
 
 // ============================================================
 // Main Phaser config
@@ -1219,17 +1221,37 @@ function drawBlock(
         x + CELL_SIZE / 2,
         y + CELL_SIZE / 2,
         char,
-        {
-          fontFamily: "Arial",
-          fontSize: "22px",
-          color: "#ffffff"
-        }
+        createLetterTextStyle(
+          char,
+          "22px",
+          4 / 3
+        )
       )
       .setOrigin(0.5)
       .setAngle(0);
 
 
   scene.letterTexts.push(text);
+}
+
+
+function createLetterTextStyle(
+  char,
+  fontSize,
+  strokeThickness
+) {
+  const style = {
+    fontFamily: "Arial",
+    fontSize: fontSize,
+    color: "#ffffff"
+  };
+
+  if (char !== "_") {
+    style.stroke = "#000000";
+    style.strokeThickness = strokeThickness;
+  }
+
+  return style;
 }
 
 
@@ -1427,11 +1449,11 @@ function drawNextPiece(scene) {
             x + PREVIEW_CELL_SIZE / 2,
             y + PREVIEW_CELL_SIZE / 2,
             cell.char,
-            {
-              fontFamily: "Arial",
-              fontSize: "10px",
-              color: "#ffffff"
-            }
+            createLetterTextStyle(
+              cell.char,
+              "10px",
+              2 / 3
+            )
           )
           .setOrigin(0.5)
           .setAngle(0);
@@ -1475,6 +1497,8 @@ function addClearedPhrase(phrase) {
 }
 
 function updateAuxiliaryList() {
+  updateExportButton();
+
   if (!auxSceneRef) {
     return;
   }
@@ -1485,7 +1509,7 @@ function updateAuxiliaryList() {
 function renderAuxiliaryText(scene) {
   const lineHeight = 30;
 
-  const topPadding = 20;
+  const topPadding = 62;
   const bottomPadding = 20;
 
   const availableHeight =
@@ -1615,7 +1639,7 @@ function scrollAuxiliary(scene, direction) {
   const lineHeight = 30;
 
   const availableHeight =
-    MAIN_HEIGHT - 40;
+    MAIN_HEIGHT - 82;
 
   const maxVisibleLines =
     Math.floor(
@@ -1641,6 +1665,95 @@ function scrollAuxiliary(scene, direction) {
 
 
   renderAuxiliaryText(scene);
+}
+
+
+// ============================================================
+// Export cleared text
+// ============================================================
+
+function setupTextExport() {
+  exportTextButton =
+    document.getElementById("export-text-button");
+
+  if (!exportTextButton) {
+    return;
+  }
+
+  exportTextButton.addEventListener(
+    "click",
+    downloadClearedText
+  );
+
+  updateExportButton();
+}
+
+
+function updateExportButton() {
+  if (!exportTextButton) {
+    return;
+  }
+
+  exportTextButton.disabled =
+    clearedPhrases.length === 0;
+}
+
+
+function downloadClearedText() {
+  if (clearedPhrases.length === 0) {
+    return;
+  }
+
+  const text =
+    clearedPhrases.join("\n") +
+    "\n";
+
+  const blob =
+    new Blob(
+      [text],
+      {
+        type: "text/plain;charset=utf-8"
+      }
+    );
+
+  const url =
+    URL.createObjectURL(blob);
+
+  const link =
+    document.createElement("a");
+
+  link.href = url;
+  link.download =
+    `langtris-text-${createExportTimestamp()}.txt`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+
+function createExportTimestamp() {
+  const now =
+    new Date();
+
+  return [
+    now.getFullYear(),
+    padExportNumber(now.getMonth() + 1),
+    padExportNumber(now.getDate()),
+    "-",
+    padExportNumber(now.getHours()),
+    padExportNumber(now.getMinutes()),
+    padExportNumber(now.getSeconds())
+  ].join("");
+}
+
+
+function padExportNumber(value) {
+  return value
+    .toString()
+    .padStart(2, "0");
 }
 
 
@@ -1716,3 +1829,5 @@ const mainGame =
 
 const auxGame =
   new Phaser.Game(auxConfig);
+
+setupTextExport();
